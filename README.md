@@ -1,9 +1,9 @@
 
-# My Django Application
+# Utilisation d’adresse e-mail pour l’authentification avec DJANGO
 
 ## Description
 
-Ceci est une application Django personnalisée où l'authentification des utilisateurs se fait par adresse email plutôt que par nom d'utilisateur. L'application inclut des fonctionnalités de connexion, déconnexion, inscription et gestion des utilisateurs.
+Ceci est une application Django personnalisée où l'authentification des utilisateurs se fait par adresse email plutôt que par nom d'utilisateur. L'application inclut des fonctionnalités de connexion, déconnexion, inscription.
 
 ## Prérequis
 
@@ -20,8 +20,8 @@ Avant de lancer l'application, assure-toi d'avoir installé les éléments suiva
 Commence par cloner le dépôt GitHub sur ton ordinateur local :
 
 ```bash
-git clone https://github.com/ton-compte/ton-projet.git
-cd ton-projet
+git clone https://github.com/KevinAnce/authentification-avec-email-sur-django.git
+cd authentification-avec-email-sur-django
 ```
 
 ### 2. Créer et activer un environnement virtuel
