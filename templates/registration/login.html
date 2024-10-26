@@ -9,6 +9,20 @@
 <body>
 <div class="container mt-5">
     <h2>Login</h2>
+    <div class="row">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="container-fluid p-0">
+                    <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                        {{ message|safe }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
     <form method="POST" class="form">
         {% csrf_token %}
         {{ form.as_p }}
@@ -18,5 +32,7 @@
         Don't have an account? <a href="{% url 'users:signup' %}">Sign up here</a>.
     </p>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
