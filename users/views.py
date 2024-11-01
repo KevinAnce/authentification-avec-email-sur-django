@@ -6,14 +6,17 @@ from django.contrib.auth.views import LogoutView
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from django.views import View
 from django.views.generic.edit import CreateView
 
-from .emails import send_opt
+from .emails import send_opt, send_reset_password_link
 from .exceptions import OtpVerifyError
-from .forms import CustomUserCreationForm, VerificationEmailForm
+from .forms import CustomUserCreationForm, VerificationEmailForm, SendResetPasswordEmailForm, ResetPasswordForm
 from .models import User
 from .services import OtpVerifyService, OtpService
+from .tokens import password_reset_token
 
 
 def home_view(request):
@@ -89,3 +92,48 @@ class CustomLogoutView(LogoutView):
 
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
+
+
+class SendResetPasswordEmailView(View):
+    def get(self, request):
+        form = SendResetPasswordEmailForm()
+        return render(self.request, template_name='registration/send_reset_password_email.html', context={"form": form})
+
+    def post(self, request):
+        form = SendResetPasswordEmailForm(self.request.POST)
+        if form.is_valid():
+            try:
+                user = User.objects.get(email=form.cleaned_data['email'])
+                with transaction.atomic():
+                    try:
+                        send_reset_password_link(request, user)
+                        messages.success(request, "We have sent reset password mail", "success")
+                    except smtplib.SMTPException:
+                        messages.error(request, "Error when sending mail please try again later", "danger")
+            except User.DoesNotExist:
+                messages.error(request, "User with this email address does not exist", "danger")
+        return render(request, template_name='registration/send_reset_password_email.html', context={"form": form})
+
+
+def reset_password(request, uidb64, token):
+    form = ResetPasswordForm()
+    context = {}
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and password_reset_token.check_token(user, token):
+        if request.method == 'POST':
+            form = ResetPasswordForm(request.POST)
+            if form.is_valid():
+                password = form.cleaned_data['password']
+                user.set_password(password)
+                user.save()
+                messages.success(request, "Your password has been reset.", "success")
+                return redirect("login")
+    else:
+        context['error'] = True
+    context['form'] = form
+    return render(request, template_name='registration/reset_password.html', context=context)
