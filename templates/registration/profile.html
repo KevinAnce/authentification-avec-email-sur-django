@@ -11,6 +11,7 @@
     <h1>User Profile</h1>
     <p>Hi, {{ request.user.email }}</p>
     <p>Welcome to your profile!</p>
+    <a class="btn btn-warning mb-3" href="{% url 'users:change-password' %}">Change your password</a>
     <form method="POST" action="{% url 'users:logout' %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Logout</button>

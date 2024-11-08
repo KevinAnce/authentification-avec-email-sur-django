@@ -2,6 +2,7 @@ import smtplib
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LogoutView
 from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
@@ -13,7 +14,8 @@ from django.views.generic.edit import CreateView
 
 from .emails import send_opt, send_reset_password_link
 from .exceptions import OtpVerifyError
-from .forms import CustomUserCreationForm, VerificationEmailForm, SendResetPasswordEmailForm, ResetPasswordForm
+from .forms import CustomUserCreationForm, VerificationEmailForm, SendResetPasswordEmailForm, ResetPasswordForm, \
+    ChangePasswordForm
 from .models import User
 from .services import OtpVerifyService, OtpService
 from .tokens import password_reset_token
@@ -137,3 +139,28 @@ def reset_password(request, uidb64, token):
         context['error'] = True
     context['form'] = form
     return render(request, template_name='registration/reset_password.html', context=context)
+
+
+class ChangePasswordView(LoginRequiredMixin, View):
+    def get(self, request):
+        form = ChangePasswordForm(user=request.user)
+        return render(self.request, template_name='registration/change_password.html', context={"form": form})
+
+    def post(self, request):
+        form = ChangePasswordForm(user=self.request.user, data=request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data['new_password']
+            try:
+                with transaction.atomic():
+                    request.user.set_password(new_password)
+                    request.user.save()
+                    messages.success(request, "Your password has been changed successfully.",
+                                     extra_tags="success")
+                    return redirect("login")
+            except Exception as e:
+                messages.error(request, f"An error occurred: {str(e)}", extra_tags="danger")
+        else:
+            # Handle form errors (e.g., current password incorrect, passwords do not match)
+            messages.error(request, "Please correct the errors below.", extra_tags="warning")
+
+        return render(request, 'registration/change_password.html', context={"form": form})
